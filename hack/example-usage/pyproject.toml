@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "example-usage"
+version = "0.1.0"
+description = "A Python client to connect to MCP servers via HTTP SSE transport and list available tools"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "example.py"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastmcp = "^2.13.1"
+
+[tool.poetry.scripts]
+example = "example:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
