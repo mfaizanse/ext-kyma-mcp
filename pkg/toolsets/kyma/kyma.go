@@ -53,6 +53,29 @@ func initKyma() []api.ServerTool {
 			},
 			Handler: kymaGet,
 		},
+		{
+			Tool: api.Tool{
+				Name:        "kyma_find_resource_version",
+				Description: "Find the apiVersion for a Kyma resource kind (returns the first matched result)",
+				InputSchema: &jsonschema.Schema{
+					Type: "object",
+					Properties: map[string]*jsonschema.Schema{
+						"resourceKind": {
+							Type:        "string",
+							Description: "Kyma resource kind (e.g., Function, APIRule, TracePipeline) in PascalCase (singular)",
+						},
+					},
+					Required: []string{"resourceKind"},
+				},
+				Annotations: api.ToolAnnotations{
+					Title:           "Kyma: Resource Version",
+					ReadOnlyHint:    ptr.To(true),
+					DestructiveHint: ptr.To(false),
+					OpenWorldHint:   ptr.To(true),
+				},
+			},
+			Handler: kymaResourceVersion,
+		},
 	}
 }
 
@@ -92,4 +115,19 @@ func kymaGet(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
 	}
 
 	return api.NewToolCallResult(strings.TrimSpace(marshalled), nil), nil
+}
+
+func kymaResourceVersion(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
+	args := params.GetArguments()
+	kind, err := common.GetRequiredString(args, "resourceKind")
+	if err != nil {
+		return api.NewToolCallResult("", err), nil
+	}
+
+	version, err := common.ResolveResourceVersion(params.DiscoveryClient(), kind)
+	if err != nil {
+		return api.NewToolCallResult("", err), nil
+	}
+
+	return api.NewToolCallResult(version, nil), nil
 }
