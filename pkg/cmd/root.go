@@ -27,6 +27,7 @@ import (
 
 	_ "github.com/mfaizanse/ext-kyma-mcp/pkg/kubernetes"
 	_ "github.com/mfaizanse/ext-kyma-mcp/pkg/toolsets/kyma"
+	_ "github.com/mfaizanse/ext-kyma-mcp/pkg/toolsets/overview"
 
 	// Import packages from the kubernetes-mcp-server module
 	"github.com/containers/kubernetes-mcp-server/pkg/api"
