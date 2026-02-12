@@ -2,4 +2,4 @@ cluster_provider_strategy = "auth-headers"
 port = "8085"
 stateless = true
 log_level = 2
-toolsets = ["core", "kyma"]
+toolsets = ["core", "kyma", "overview"]
