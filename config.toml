@@ -1,0 +1,5 @@
+cluster_provider_strategy = "auth-headers"
+port = "8080"
+stateless = true
+log_level = 1
+toolsets = ["core", "kyma"]

@@ -8,56 +8,9 @@
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/main.go",
             "args": [
-                "--port", "8085",
-                "--cluster-provider", "auth-headers",
-                "--log-level", "1",
-                "--stateless", "true"
+                "--config=${workspaceFolder}/config-local.toml"
             ],
             "env": {},
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Debug ext-kyma-mcp (STDIO)",
-            "type": "go",
-            "request": "launch",
-            "mode": "debug",
-            "program": "${workspaceFolder}/cmd/main.go",
-            "args": [
-                "--cluster-provider", "auth-headers",
-                "--log-level", "5"
-            ],
-            "env": {},
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Debug ext-kyma-mcp (with config)",
-            "type": "go",
-            "request": "launch",
-            "mode": "debug",
-            "program": "${workspaceFolder}/cmd/main.go",
-            "args": [
-                "--config", "${workspaceFolder}/config.toml",
-                "--port", "8080",
-                "--log-level", "5"
-            ],
-            "env": {},
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Debug Current Test File",
-            "type": "go",
-            "request": "launch",
-            "mode": "test",
-            "program": "${file}",
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "name": "Debug All Tests",
-            "type": "go",
-            "request": "launch",
-            "mode": "test",
-            "program": "${workspaceFolder}/...",
             "cwd": "${workspaceFolder}"
         }
     ]

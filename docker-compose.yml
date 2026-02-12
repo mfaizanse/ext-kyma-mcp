@@ -1,0 +1,6 @@
+services:
+  ext-kyma-mcp:
+    image: mfaizan21/ext-kyma-mcp:0.0.1
+    ports:
+      - "8089:8080"
+    restart: unless-stopped

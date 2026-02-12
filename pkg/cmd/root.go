@@ -26,6 +26,7 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 
 	_ "github.com/mfaizanse/ext-kyma-mcp/pkg/kubernetes"
+	_ "github.com/mfaizanse/ext-kyma-mcp/pkg/toolsets/kyma"
 
 	// Import packages from the kubernetes-mcp-server module
 	"github.com/containers/kubernetes-mcp-server/pkg/api"
@@ -196,11 +197,13 @@ func (e *ExtendedMCPServerOptions) Run() error {
 	klog.V(1).Infof(" - Stateless mode: %t", e.StaticConfig.Stateless)
 	klog.V(1).Infof(" - Telemetry enabled: %t", e.StaticConfig.Telemetry.IsEnabled())
 
-	strategy := e.StaticConfig.ClusterProviderStrategy
-	if strategy == "" {
-		return fmt.Errorf("ClusterProviderStrategy must be set explicitly in your Config to avoid unexpected behavior in Kyma environments")
+	if e.StaticConfig.ClusterProviderStrategy == "" {
+		klog.Warningf("ClusterProviderStrategy must be set explicitly in your Config to avoid unexpected behavior in Kyma environments")
+		klog.Warningf("Using default ClusterProviderStrategy: %s", config.ClusterProviderAuthHeaders)
+		e.StaticConfig.ClusterProviderStrategy = config.ClusterProviderAuthHeaders
 	}
 
+	strategy := e.StaticConfig.ClusterProviderStrategy
 	klog.V(1).Infof(" - ClusterProviderStrategy: %s", strategy)
 
 	if e.Version {
