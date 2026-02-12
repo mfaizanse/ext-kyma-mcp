@@ -10,6 +10,7 @@ import (
 	"github.com/containers/kubernetes-mcp-server/pkg/mcplog"
 	"github.com/containers/kubernetes-mcp-server/pkg/output"
 	"github.com/google/jsonschema-go/jsonschema"
+	"github.com/mfaizanse/ext-kyma-mcp/pkg/toolsets/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -97,22 +98,22 @@ func overviewClusterVersion(params api.ToolHandlerParams) (*api.ToolCallResult, 
 
 func overviewRelevantContext(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
 	args := params.GetArguments()
-	kind, err := getRequiredString(args, "kind")
+	kind, err := common.GetRequiredString(args, "kind")
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
 
-	namespace, err := getOptionalString(args, "namespace")
+	namespace, err := common.GetOptionalString(args, "namespace")
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
 
-	name, err := getOptionalString(args, "name")
+	name, err := common.GetOptionalString(args, "name")
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
 
-	apiVersion, err := getOptionalString(args, "apiVersion")
+	apiVersion, err := common.GetOptionalString(args, "apiVersion")
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
@@ -222,7 +223,7 @@ func listWarningEvents(params api.ToolHandlerParams, namespace string) (string, 
 		mcplog.HandleK8sError(params.Context, err, "events listing")
 		return "", fmt.Errorf("failed to list events: %w", err)
 	}
-	filtered := filterEvents(events, func(event map[string]any) bool {
+	filtered := common.FilterEvents(events, func(event map[string]any) bool {
 		value, ok := event["Type"].(string)
 		return ok && strings.EqualFold(value, "Warning")
 	})
@@ -242,7 +243,7 @@ func listEventsForResource(params api.ToolHandlerParams, namespace, kind, name s
 		mcplog.HandleK8sError(params.Context, err, "events listing")
 		return "", fmt.Errorf("failed to list events: %w", err)
 	}
-	filtered := filterEvents(events, func(event map[string]any) bool {
+	filtered := common.FilterEvents(events, func(event map[string]any) bool {
 		involved, ok := event["InvolvedObject"].(map[string]string)
 		if !ok {
 			return false
@@ -304,41 +305,4 @@ func formatNodeMetrics(params api.ToolHandlerParams, core *kubernetes.Core) (str
 		return "", fmt.Errorf("failed to print node metrics: %w", err)
 	}
 	return strings.TrimSpace(buf.String()), nil
-}
-
-func filterEvents(events []map[string]any, predicate func(map[string]any) bool) []map[string]any {
-	if predicate == nil {
-		return events
-	}
-	filtered := make([]map[string]any, 0, len(events))
-	for _, event := range events {
-		if predicate(event) {
-			filtered = append(filtered, event)
-		}
-	}
-	return filtered
-}
-
-func getRequiredString(args map[string]any, key string) (string, error) {
-	value, ok := args[key]
-	if !ok || value == nil {
-		return "", fmt.Errorf("%s is required", key)
-	}
-	strValue, ok := value.(string)
-	if !ok || strings.TrimSpace(strValue) == "" {
-		return "", fmt.Errorf("%s is required", key)
-	}
-	return strings.TrimSpace(strValue), nil
-}
-
-func getOptionalString(args map[string]any, key string) (string, error) {
-	value, ok := args[key]
-	if !ok || value == nil {
-		return "", nil
-	}
-	strValue, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("%s is not a string", key)
-	}
-	return strings.TrimSpace(strValue), nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/containers/kubernetes-mcp-server/pkg/mcplog"
 	"github.com/containers/kubernetes-mcp-server/pkg/output"
 	"github.com/google/jsonschema-go/jsonschema"
+	"github.com/mfaizanse/ext-kyma-mcp/pkg/toolsets/common"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 )
@@ -58,17 +59,17 @@ func initKyma() []api.ServerTool {
 func kymaGet(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
 	args := params.GetArguments()
 
-	name, err := getOptionalString(args, "name", defaultKymaName)
+	name, err := common.GetOptionalStringDefault(args, "name", defaultKymaName)
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
 
-	namespace, err := getOptionalString(args, "namespace", defaultKymaNamespace)
+	namespace, err := common.GetOptionalStringDefault(args, "namespace", defaultKymaNamespace)
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
 
-	apiVersion, err := getOptionalString(args, "apiVersion", defaultKymaAPIVersion)
+	apiVersion, err := common.GetOptionalStringDefault(args, "apiVersion", defaultKymaAPIVersion)
 	if err != nil {
 		return api.NewToolCallResult("", err), nil
 	}
@@ -91,19 +92,4 @@ func kymaGet(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
 	}
 
 	return api.NewToolCallResult(strings.TrimSpace(marshalled), nil), nil
-}
-
-func getOptionalString(args map[string]any, key, defaultValue string) (string, error) {
-	value, ok := args[key]
-	if !ok || value == nil {
-		return defaultValue, nil
-	}
-	strValue, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("%s is not a string", key)
-	}
-	if strings.TrimSpace(strValue) == "" {
-		return defaultValue, nil
-	}
-	return strValue, nil
 }
