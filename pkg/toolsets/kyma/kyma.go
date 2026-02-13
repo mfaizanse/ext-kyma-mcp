@@ -9,6 +9,7 @@ import (
 	"github.com/containers/kubernetes-mcp-server/pkg/mcplog"
 	"github.com/containers/kubernetes-mcp-server/pkg/output"
 	"github.com/google/jsonschema-go/jsonschema"
+	"github.com/mfaizanse/ext-kyma-mcp/pkg/saphelp"
 	"github.com/mfaizanse/ext-kyma-mcp/pkg/toolsets/common"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
@@ -76,6 +77,41 @@ func initKyma() []api.ServerTool {
 			},
 			Handler: kymaResourceVersion,
 		},
+		{
+			Tool: api.Tool{
+				Name:        "kyma_help_semantic_search",
+				Description: "Search SAP Help Portal using semantic search and return relevant results",
+				InputSchema: &jsonschema.Schema{
+					Type: "object",
+					Properties: map[string]*jsonschema.Schema{
+						"query": {
+							Type:        "string",
+							Description: "Search query in detail for semantic search and include term kyma for better results",
+						},
+						"to": {
+							Type:        "integer",
+							Description: "Maximum number of results to return (defaults to 3)",
+						},
+						"locale": {
+							Type:        "string",
+							Description: "Locale hint for the search (defaults to en-US)",
+						},
+						"isExactMatch": {
+							Type:        "boolean",
+							Description: "Whether to require exact matches (defaults to false)",
+						},
+					},
+					Required: []string{"query"},
+				},
+				Annotations: api.ToolAnnotations{
+					Title:           "Kyma: SAP Help Semantic Search",
+					ReadOnlyHint:    ptr.To(true),
+					DestructiveHint: ptr.To(false),
+					OpenWorldHint:   ptr.To(true),
+				},
+			},
+			Handler: kymaHelpSemanticSearch,
+		},
 	}
 }
 
@@ -130,4 +166,37 @@ func kymaResourceVersion(params api.ToolHandlerParams) (*api.ToolCallResult, err
 	}
 
 	return api.NewToolCallResult(version, nil), nil
+}
+
+func kymaHelpSemanticSearch(params api.ToolHandlerParams) (*api.ToolCallResult, error) {
+	args := params.GetArguments()
+	query, err := common.GetRequiredString(args, "query")
+	if err != nil {
+		return api.NewToolCallResult("", err), nil
+	}
+
+	maxResults, err := common.GetOptionalInt(args, "to", 3)
+	if err != nil {
+		return api.NewToolCallResult("", err), nil
+	}
+	if maxResults <= 0 {
+		maxResults = 5
+	}
+
+	locale, err := common.GetOptionalStringDefault(args, "locale", "en-US")
+	if err != nil {
+		return api.NewToolCallResult("", err), nil
+	}
+
+	isExactMatch, err := common.GetOptionalBool(args, "isExactMatch", false)
+	if err != nil {
+		return api.NewToolCallResult("", err), nil
+	}
+
+	// Call the SAP Help semantic search function.
+	content, err := saphelp.SAPHelpSemanticSearch(params.Context, query, maxResults, locale, isExactMatch)
+	if err != nil {
+		return api.NewToolCallResult("", fmt.Errorf("SAP Help semantic search failed: %w", err)), nil
+	}
+	return api.NewToolCallResult(content, nil), nil
 }
