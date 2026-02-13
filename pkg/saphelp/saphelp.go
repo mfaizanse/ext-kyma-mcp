@@ -17,6 +17,7 @@ import (
 const (
 	sapHelpBaseURL        = "https://help.sap.com"
 	sapHelpSemanticSearch = "https://help.sap.com/http.svc/semanticsearch"
+	contentDivSelector    = `#page`
 )
 
 type SAPHelpSemanticSearchRequest struct {
@@ -119,7 +120,7 @@ func formatSapHelpSearchResults(ctx context.Context, maxResults int, locale stri
 		resolvedURL := normalizeSapHelpURL(url)
 		content := ""
 		if resolvedURL != "" {
-			fetched, err := fetchSapHelpPageContent(ctx, resolvedURL, locale)
+			fetched, err := fetchSapHelpPageContent(ctx, resolvedURL, title, locale)
 			if err != nil {
 				content = fmt.Sprintf("failed to fetch content: %s", err.Error())
 			} else {
@@ -210,7 +211,7 @@ func normalizeSapHelpURL(rawURL string) string {
 	return sapHelpBaseURL + "/" + trimmed
 }
 
-func fetchSapHelpPageContent(ctx context.Context, pageURL, locale string) (string, error) {
+func fetchSapHelpPageContent(ctx context.Context, pageURL, title, locale string) (string, error) {
 	if locale != "" {
 		pageURL = appendLocaleParam(pageURL, locale)
 	}
@@ -221,24 +222,21 @@ func fetchSapHelpPageContent(ctx context.Context, pageURL, locale string) (strin
 	chromeCtx, cancel = context.WithTimeout(chromeCtx, 45*time.Second)
 	defer cancel()
 
-	// The text indicating the loading state
-	loadingText := "Loading Topic…"
-
 	var html string
 	err := chromedp.Run(
 		chromeCtx,
 		chromedp.Navigate(pageURL),
-		chromedp.WaitVisible(`#page`, chromedp.ByID),
-		chromedp.WaitReady(`#page`, chromedp.ByID),
+		chromedp.WaitVisible(contentDivSelector, chromedp.ByID),
+		chromedp.WaitReady(contentDivSelector, chromedp.ByID),
 		chromedp.Poll(fmt.Sprintf(`
 			(function() {
 				var el = document.querySelector("%s");
 				if (!el) return false; // Element doesn't exist yet
 				var text = el.innerText.trim();
-				return text.length > 0 && text !== "%s";
+				return text.length > 0 && text.indexOf("%s") !== -1;
 			})()
-		`, `#page`, loadingText), nil),
-		chromedp.OuterHTML(`#page`, &html, chromedp.ByID),
+		`, contentDivSelector, title), nil),
+		chromedp.OuterHTML(contentDivSelector, &html, chromedp.ByID),
 	)
 	if err != nil {
 		return "", fmt.Errorf("render page: %w", err)
